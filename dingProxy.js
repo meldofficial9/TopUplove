@@ -19,8 +19,7 @@ const fetchOAuthToken = async () => {
   const now = Date.now();
 
   if (token && tokenExpiresAt && now < tokenExpiresAt - 60000) {
-    // Token still valid for at least 60s
-    return token;
+    return token; // Token still valid
   }
 
   try {
@@ -52,12 +51,18 @@ app.post("/api/topup", async (req, res) => {
   try {
     const accessToken = await fetchOAuthToken();
 
-    const response = await axios.post("https://api.dingconnect.com/api/V1/Topup", req.body, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-    });
+    console.log("📦 Top-up request body:", req.body); // Optional: log for debugging
+
+    const response = await axios.post(
+      "https://api.dingconnect.com/api/V1/SendTransfer", // ✅ Correct endpoint
+      req.body,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
     res.json(response.data);
   } catch (error) {
