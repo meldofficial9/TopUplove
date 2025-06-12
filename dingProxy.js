@@ -6,7 +6,7 @@ const qs = require("qs");
 
 dotenv.config();
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT; // ✅ Only use the PORT assigned by Render
 
 app.use(cors());
 app.use(express.json());
@@ -51,7 +51,7 @@ app.post("/api/topup", async (req, res) => {
   try {
     const accessToken = await fetchOAuthToken();
 
-    console.log("📦 Top-up request body:", req.body); // Optional: log for debugging
+    console.log("📦 Top-up request body:", req.body);
 
     const response = await axios.post(
       "https://api.dingconnect.com/api/V1/SendTransfer",
@@ -95,12 +95,12 @@ app.get("/api/countries", async (req, res) => {
   }
 });
 
-// ✅ NEW: Proxy for validating phone numbers
+// ✅ Proxy: POST /api/validate
 app.post("/api/validate", async (req, res) => {
   try {
     const accessToken = await fetchOAuthToken();
 
-    console.log("📞 Validating phone number:", req.body); // Optional log
+    console.log("📞 Validating phone number:", req.body);
 
     const response = await axios.post(
       "https://api.dingconnect.com/api/V1/ValidatePhoneNumber",
@@ -128,12 +128,7 @@ app.get("/", (req, res) => {
   res.send("✅ Ding OAuth Proxy is running.");
 });
 
+// ✅ Only one listen()
 app.listen(port, () => {
-  console.log(`🚀 Ding Proxy Server running at http://localhost:${port}`);
+  console.log(`🚀 Ding Proxy Server running on port ${port}`);
 });
-
-
-app.listen(port, () => {
-  console.log(`🚀 Ding Proxy Server running at http://localhost:${port}`);
-});
-
