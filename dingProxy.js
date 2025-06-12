@@ -54,7 +54,7 @@ app.post("/api/topup", async (req, res) => {
     console.log("📦 Top-up request body:", req.body); // Optional: log for debugging
 
     const response = await axios.post(
-      "https://api.dingconnect.com/api/V1/SendTransfer", // ✅ Correct endpoint
+      "https://api.dingconnect.com/api/V1/SendTransfer",
       req.body,
       {
         headers: {
@@ -95,10 +95,43 @@ app.get("/api/countries", async (req, res) => {
   }
 });
 
+// ✅ NEW: Proxy for validating phone numbers
+app.post("/api/validate", async (req, res) => {
+  try {
+    const accessToken = await fetchOAuthToken();
+
+    console.log("📞 Validating phone number:", req.body); // Optional log
+
+    const response = await axios.post(
+      "https://api.dingconnect.com/api/V1/ValidatePhoneNumber",
+      req.body,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error("Validation error:", error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: error.message,
+      details: error.response?.data,
+    });
+  }
+});
+
 // Health check
 app.get("/", (req, res) => {
   res.send("✅ Ding OAuth Proxy is running.");
 });
+
+app.listen(port, () => {
+  console.log(`🚀 Ding Proxy Server running at http://localhost:${port}`);
+});
+
 
 app.listen(port, () => {
   console.log(`🚀 Ding Proxy Server running at http://localhost:${port}`);
