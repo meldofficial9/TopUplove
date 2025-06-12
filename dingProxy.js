@@ -6,7 +6,7 @@ const qs = require("qs");
 
 dotenv.config();
 const app = express();
-const port = process.env.PORT; // ✅ Only use the PORT assigned by Render
+const port = process.env.PORT; // 🔒 Required by Render
 
 app.use(cors());
 app.use(express.json());
@@ -14,12 +14,12 @@ app.use(express.json());
 let token = null;
 let tokenExpiresAt = null;
 
-// Get a fresh access token from Ding OAuth
+// 🔐 Fetch OAuth token
 const fetchOAuthToken = async () => {
   const now = Date.now();
 
   if (token && tokenExpiresAt && now < tokenExpiresAt - 60000) {
-    return token; // Token still valid
+    return token;
   }
 
   try {
@@ -46,60 +46,10 @@ const fetchOAuthToken = async () => {
   }
 };
 
-// Proxy: POST /api/topup
-app.post("/api/topup", async (req, res) => {
-  try {
-    const accessToken = await fetchOAuthToken();
-
-    console.log("📦 Top-up request body:", req.body);
-
-    const response = await axios.post(
-      "https://api.dingconnect.com/api/V1/SendTransfer",
-      req.body,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    res.json(response.data);
-  } catch (error) {
-    console.error("Top-up error:", error.response?.data || error.message);
-    res.status(error.response?.status || 500).json({
-      error: error.message,
-      details: error.response?.data,
-    });
-  }
-});
-
-// Proxy: GET /api/countries
-app.get("/api/countries", async (req, res) => {
-  try {
-    const accessToken = await fetchOAuthToken();
-
-    const response = await axios.get("https://api.dingconnect.com/api/V1/GetCountries", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    res.json(response.data);
-  } catch (error) {
-    console.error("Countries error:", error.response?.data || error.message);
-    res.status(error.response?.status || 500).json({
-      error: error.message,
-      details: error.response?.data,
-    });
-  }
-});
-
-// ✅ Proxy: POST /api/validate
+// ✅ Validate phone number
 app.post("/api/validate", async (req, res) => {
   try {
     const accessToken = await fetchOAuthToken();
-
     console.log("📞 Validating phone number:", req.body);
 
     const response = await axios.post(
@@ -123,12 +73,58 @@ app.post("/api/validate", async (req, res) => {
   }
 });
 
-// Health check
+// 🔁 Top-up endpoint
+app.post("/api/topup", async (req, res) => {
+  try {
+    const accessToken = await fetchOAuthToken();
+    console.log("📦 Top-up request body:", req.body);
+
+    const response = await axios.post(
+      "https://api.dingconnect.com/api/V1/SendTransfer",
+      req.body,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error("Top-up error:", error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: error.message,
+      details: error.response?.data,
+    });
+  }
+});
+
+// 🌍 Get countries
+app.get("/api/countries", async (req, res) => {
+  try {
+    const accessToken = await fetchOAuthToken();
+    const response = await axios.get("https://api.dingconnect.com/api/V1/GetCountries", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error("Countries error:", error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: error.message,
+      details: error.response?.data,
+    });
+  }
+});
+
+// 🔍 Health check
 app.get("/", (req, res) => {
   res.send("✅ Ding OAuth Proxy is running.");
 });
 
-// ✅ Only one listen()
 app.listen(port, () => {
   console.log(`🚀 Ding Proxy Server running on port ${port}`);
 });
