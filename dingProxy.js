@@ -6,7 +6,7 @@ const qs = require("qs");
 
 dotenv.config();
 const app = express();
-const port = process.env.PORT; // 🔒 Required by Render
+const port = process.env.PORT;
 
 app.use(cors());
 app.use(express.json());
@@ -52,17 +52,9 @@ app.post("/api/validate", async (req, res) => {
     const accessToken = await fetchOAuthToken();
     console.log("📞 Validating phone number:", req.body);
 
-    // ❗ Ensure key casing matches Ding API requirements
-    const payload = {
-      PhoneNumber: req.body.phoneNumber,
-      CountryCode: req.body.countryCode,
-      SkuCode: req.body.skuCode,
-      SendValue: req.body.sendValue,
-    };
-
     const response = await axios.post(
       "https://api.dingconnect.com/api/V1/ValidatePhoneNumber",
-      payload,
+      req.body,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -112,6 +104,7 @@ app.post("/api/topup", async (req, res) => {
 app.get("/api/countries", async (req, res) => {
   try {
     const accessToken = await fetchOAuthToken();
+
     const response = await axios.get("https://api.dingconnect.com/api/V1/GetCountries", {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -121,6 +114,31 @@ app.get("/api/countries", async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error("Countries error:", error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: error.message,
+      details: error.response?.data,
+    });
+  }
+});
+
+// 🆕 🔍 Get products by country
+app.get("/api/products/:countryCode", async (req, res) => {
+  try {
+    const accessToken = await fetchOAuthToken();
+    const { countryCode } = req.params;
+
+    const response = await axios.get(
+      `https://api.dingconnect.com/api/V1/GetProductsByCountry?countryCode=${countryCode}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error("GetProductsByCountry error:", error.response?.data || error.message);
     res.status(error.response?.status || 500).json({
       error: error.message,
       details: error.response?.data,
