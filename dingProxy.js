@@ -52,9 +52,17 @@ app.post("/api/validate", async (req, res) => {
     const accessToken = await fetchOAuthToken();
     console.log("📞 Validating phone number:", req.body);
 
+    // ❗ Ensure key casing matches Ding API requirements
+    const payload = {
+      PhoneNumber: req.body.phoneNumber,
+      CountryCode: req.body.countryCode,
+      SkuCode: req.body.skuCode,
+      SendValue: req.body.sendValue,
+    };
+
     const response = await axios.post(
       "https://api.dingconnect.com/api/V1/ValidatePhoneNumber",
-      req.body,
+      payload,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -128,3 +136,4 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`🚀 Ding Proxy Server running on port ${port}`);
 });
+
