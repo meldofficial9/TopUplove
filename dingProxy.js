@@ -46,26 +46,44 @@ const fetchOAuthToken = async () => {
   }
 };
 
-// ✅ Validate phone number
-app.post("/api/validate", async (req, res) => {
+// ✅ Get products by country
+app.get("/api/getproductsbycountry/:countryCode", async (req, res) => {
   try {
     const accessToken = await fetchOAuthToken();
-    console.log("📞 Validating phone number:", req.body);
+    const { countryCode } = req.params;
 
-    const response = await axios.post(
-      "https://api.dingconnect.com/api/V1/ValidatePhoneNumber",
-      req.body,
+    const response = await axios.get(
+      `https://api.dingconnect.com/api/V1/GetProductsByCountry?countryCode=${countryCode}`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
         },
       }
     );
 
     res.json(response.data);
   } catch (error) {
-    console.error("Validation error:", error.response?.data || error.message);
+    console.error("Product fetch error:", error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: error.message,
+      details: error.response?.data,
+    });
+  }
+});
+
+// 🌍 Get countries
+app.get("/api/countries", async (req, res) => {
+  try {
+    const accessToken = await fetchOAuthToken();
+    const response = await axios.get("https://api.dingconnect.com/api/V1/GetCountries", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error("Countries error:", error.response?.data || error.message);
     res.status(error.response?.status || 500).json({
       error: error.message,
       details: error.response?.data,
@@ -100,52 +118,6 @@ app.post("/api/topup", async (req, res) => {
   }
 });
 
-// 🌍 Get countries
-app.get("/api/countries", async (req, res) => {
-  try {
-    const accessToken = await fetchOAuthToken();
-
-    const response = await axios.get("https://api.dingconnect.com/api/V1/GetCountries", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    res.json(response.data);
-  } catch (error) {
-    console.error("Countries error:", error.response?.data || error.message);
-    res.status(error.response?.status || 500).json({
-      error: error.message,
-      details: error.response?.data,
-    });
-  }
-});
-
-// 🆕 🔍 Get products by country
-app.get("/api/products/:countryCode", async (req, res) => {
-  try {
-    const accessToken = await fetchOAuthToken();
-    const { countryCode } = req.params;
-
-    const response = await axios.get(
-      `https://api.dingconnect.com/api/V1/GetProductsByCountry?countryCode=${countryCode}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-
-    res.json(response.data);
-  } catch (error) {
-    console.error("GetProductsByCountry error:", error.response?.data || error.message);
-    res.status(error.response?.status || 500).json({
-      error: error.message,
-      details: error.response?.data,
-    });
-  }
-});
-
 // 🔍 Health check
 app.get("/", (req, res) => {
   res.send("✅ Ding OAuth Proxy is running.");
@@ -154,4 +126,3 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`🚀 Ding Proxy Server running on port ${port}`);
 });
-
