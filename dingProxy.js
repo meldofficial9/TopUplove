@@ -46,7 +46,7 @@ const fetchOAuthToken = async () => {
   }
 };
 
-// ✅ Get products by country (fixed)
+// ✅ Get products by country
 app.get("/api/getproductsbycountry/:countryCode", async (req, res) => {
   try {
     const accessToken = await fetchOAuthToken();
@@ -77,26 +77,6 @@ app.get("/api/getproductsbycountry/:countryCode", async (req, res) => {
   }
 });
 
-// 🌍 Get countries
-app.get("/api/countries", async (req, res) => {
-  try {
-    const accessToken = await fetchOAuthToken();
-    const response = await axios.get("https://api.dingconnect.com/api/V1/GetCountries", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    res.json(response.data);
-  } catch (error) {
-    console.error("Countries error:", error.response?.data || error.message);
-    res.status(error.response?.status || 500).json({
-      error: error.message,
-      details: error.response?.data,
-    });
-  }
-});
-
 // 🔁 Top-up endpoint
 app.post("/api/topup", async (req, res) => {
   try {
@@ -117,6 +97,55 @@ app.post("/api/topup", async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error("Top-up error:", error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: error.message,
+      details: error.response?.data,
+    });
+  }
+});
+
+// ☎️ Validate phone number
+app.post("/api/validate", async (req, res) => {
+  try {
+    const accessToken = await fetchOAuthToken();
+    const response = await axios.post(
+      "https://api.dingconnect.com/api/V1/ValidatePhoneNumber",
+      req.body,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    res.json({
+      success: true,
+      data: response.data,
+    });
+  } catch (error) {
+    console.error("❌ Phone number validation error:", error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      success: false,
+      error: "Phone number validation failed",
+      details: error.response?.data || error.message,
+    });
+  }
+});
+
+// 🌍 Get countries
+app.get("/api/countries", async (req, res) => {
+  try {
+    const accessToken = await fetchOAuthToken();
+    const response = await axios.get("https://api.dingconnect.com/api/V1/GetCountries", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error("Countries error:", error.response?.data || error.message);
     res.status(error.response?.status || 500).json({
       error: error.message,
       details: error.response?.data,
