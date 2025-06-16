@@ -46,11 +46,13 @@ const fetchOAuthToken = async () => {
   }
 };
 
-// ✅ Get products by country
+// ✅ Get products by country (fixed)
 app.get("/api/getproductsbycountry/:countryCode", async (req, res) => {
   try {
     const accessToken = await fetchOAuthToken();
     const { countryCode } = req.params;
+
+    console.log("📦 Fetching products for country:", countryCode);
 
     const response = await axios.get(
       `https://api.dingconnect.com/api/V1/GetProductsByCountry?countryCode=${countryCode}`,
@@ -61,12 +63,16 @@ app.get("/api/getproductsbycountry/:countryCode", async (req, res) => {
       }
     );
 
-    res.json(response.data);
+    res.json({
+      success: true,
+      products: response.data,
+    });
   } catch (error) {
-    console.error("Product fetch error:", error.response?.data || error.message);
+    console.error("❌ Product fetch error:", error.response?.data || error.message);
     res.status(error.response?.status || 500).json({
-      error: error.message,
-      details: error.response?.data,
+      success: false,
+      error: "Failed to fetch products",
+      details: error.response?.data || error.message,
     });
   }
 });
