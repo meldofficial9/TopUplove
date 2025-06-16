@@ -104,13 +104,29 @@ app.post("/api/topup", async (req, res) => {
   }
 });
 
-// ☎️ Validate phone number
+// ✅ Validate phone number (corrected)
 app.post("/api/validate", async (req, res) => {
   try {
     const accessToken = await fetchOAuthToken();
+    const { to, countryCode, skuCode } = req.body;
+
+    if (!to || !countryCode || !skuCode) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required fields: 'to', 'countryCode', or 'skuCode'",
+      });
+    }
+
+    const payload = {
+      accountNumber: to,
+      skuCode,
+      distributorRef: "validate-" + Date.now(),
+      sendValue: 1,
+    };
+
     const response = await axios.post(
-      "https://api.dingconnect.com/api/V1/ValidatePhoneNumber",
-      req.body,
+      "https://api.dingconnect.com/api/V1/ValidatePhoneBookAccount",
+      payload,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -121,13 +137,13 @@ app.post("/api/validate", async (req, res) => {
 
     res.json({
       success: true,
-      data: response.data,
+      validation: response.data,
     });
   } catch (error) {
-    console.error("❌ Phone number validation error:", error.response?.data || error.message);
+    console.error("❌ Validate error:", error.response?.data || error.message);
     res.status(error.response?.status || 500).json({
       success: false,
-      error: "Phone number validation failed",
+      error: "Validation failed",
       details: error.response?.data || error.message,
     });
   }
